@@ -1,0 +1,57 @@
+-- Drop table if exists
+DROP TABLE IF EXISTS FeePayments;
+
+-- Create table
+CREATE TABLE FeePayments (
+    payment_id   INT PRIMARY KEY,
+    student_name VARCHAR(100) NOT NULL,
+    amount       DECIMAL(10,2) CHECK (amount > 0),
+    payment_date DATE
+);
+
+-- PART A: Insert multiple records in one transaction
+START TRANSACTION;
+
+INSERT INTO FeePayments VALUES (1, 'Ashish', 5000.00, '2024-06-01');
+INSERT INTO FeePayments VALUES (2, 'Smaran', 4500.00, '2024-06-02');
+INSERT INTO FeePayments VALUES (3, 'Vaibhav', 5500.00, '2024-06-03');
+
+COMMIT;
+
+SELECT * FROM FeePayments;
+
+-- PART B: Transaction fails due to duplicate ID / negative amount
+START TRANSACTION;
+
+INSERT INTO FeePayments VALUES (4, 'Kiran', 6000.00, '2024-06-04');
+-- Next insert will fail because of duplicate PK and negative amount
+INSERT INTO FeePayments VALUES (1, 'Ashish', -4000.00, '2024-06-05');
+
+ROLLBACK;
+
+SELECT * FROM FeePayments;
+
+-- PART C: Transaction fails due to NULL student_name
+START TRANSACTION;
+
+INSERT INTO FeePayments VALUES (5, 'Rohit', 7000.00, '2024-06-06');
+-- Next insert will fail due to NOT NULL constraint
+INSERT INTO FeePayments VALUES (6, NULL, 8000.00, '2024-06-07');
+
+ROLLBACK;
+
+SELECT * FROM FeePayments;
+
+-- PART D: Verify ACID Compliance
+START TRANSACTION;
+
+INSERT INTO FeePayments VALUES (7, 'Manish', 9000.00, '2024-06-08');
+-- Next insert will fail due to duplicate PK
+INSERT INTO FeePayments VALUES (1, 'Duplicate', 10000.00, '2024-06-09');
+
+ROLLBACK;
+
+COMMIT;
+
+-- Final Data after all parts
+SELECT * FROM FeePayments;
