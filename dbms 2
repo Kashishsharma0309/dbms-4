@@ -1,0 +1,66 @@
+-- ============================
+-- Drop and Recreate Table
+-- ============================
+DROP TABLE IF EXISTS StudentEnrollments;
+
+CREATE TABLE StudentEnrollments (
+    enrollment_id   INT PRIMARY KEY,
+    student_name    VARCHAR(100) NOT NULL,
+    course_id       VARCHAR(10) NOT NULL,
+    enrollment_date DATE NOT NULL,
+    CONSTRAINT uniq_student_course UNIQUE(student_name, course_id)
+);
+
+-- ============================
+-- PART A: Insert initial records & prevent duplicates
+-- ============================
+START TRANSACTION;
+
+INSERT INTO StudentEnrollments VALUES (1, 'Ashish',  'CSE101', '2024-07-01');
+INSERT INTO StudentEnrollments VALUES (2, 'Smaran',  'CSE102', '2024-07-01');
+INSERT INTO StudentEnrollments VALUES (3, 'Vaibhav', 'CSE101', '2024-07-01');
+
+COMMIT;
+
+-- Attempt duplicate insert (should fail but not stop execution)
+START TRANSACTION;
+INSERT IGNORE INTO StudentEnrollments VALUES (4, 'Ashish', 'CSE101', '2024-07-02'); -- Duplicate
+ROLLBACK; -- Rollback to demonstrate ACID
+
+-- ============================
+-- PART B: Row-Level Locking Simulation
+-- ============================
+-- User A locks Ashish's row
+START TRANSACTION;
+SELECT * 
+FROM StudentEnrollments
+WHERE student_name = 'Ashish' AND course_id = 'CSE101'
+FOR UPDATE;
+
+-- User A can now verify or update safely
+UPDATE StudentEnrollments
+SET enrollment_date = '2024-07-05'
+WHERE student_name = 'Ashish' AND course_id = 'CSE101';
+
+COMMIT; -- Row unlocked after commit
+
+-- ============================
+-- PART C: Concurrent Updates Simulation
+-- ============================
+-- Simulate another update safely
+START TRANSACTION;
+SELECT * 
+FROM StudentEnrollments
+WHERE student_name = 'Ashish' AND course_id = 'CSE101'
+FOR UPDATE;
+
+UPDATE StudentEnrollments
+SET enrollment_date = '2024-07-10'
+WHERE student_name = 'Ashish' AND course_id = 'CSE101';
+
+COMMIT;
+
+-- ============================
+-- FINAL OUTPUT – Only 1 Table
+-- ============================
+SELECT * FROM StudentEnrollments;
